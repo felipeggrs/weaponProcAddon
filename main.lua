@@ -10,13 +10,13 @@ local weapon_proc = {
 local DEBUG_MODE = false
 
 local weaponProcs = {
-    -- nodachi = {
-    --     statName = "melee_critical_mul",
-    --     thresholdIncrease = 900,
-    --     displayName = "NODACHI CRIT",
-    --     color = {1, 0.3, 0.3},  -- Red
-    --     cooldown = 10000,
-    -- },
+    nodachi = {
+        statName = "melee_critical_mul",
+        thresholdIncrease = 900,
+        displayName = "100% CRIT",
+        color = {0.3, 0.7, 1},
+        cooldown = 10000,
+    },
     spear = {
         statName = "ignore_armor",
         thresholdIncrease = 8000,
@@ -87,26 +87,38 @@ end
 local function UpdateUI()
     local currentTime = api.Time:GetUiMsec()
 
-    local spearProc = activeProcs["spear"]
-    local spearDef = weaponProcs["spear"]
+    local activeProc = nil
+    for procName, procData in pairs(activeProcs) do
+        activeProc = procData
+        break
+    end
 
-    if spearProc then
-        procLabel:SetText(spearProc.displayName)
-        procLabel.style:SetColor(spearProc.color[1], spearProc.color[2], spearProc.color[3], 1)
+    if activeProc then
+        procLabel:SetText(activeProc.displayName)
+        procLabel.style:SetColor(activeProc.color[1], activeProc.color[2], activeProc.color[3], 1)
     else
-        local endTime = procEndTime["spear"]
-        if endTime then
-            local elapsed = currentTime - endTime
-            local cooldown = spearDef.cooldown or 10000
+        local shortestRemaining = nil
+        local onCooldown = false
 
-            if elapsed >= cooldown then
-                procLabel:SetText("AVAILABLE")
-                procLabel.style:SetColor(0, 1, 0, 1)
-            else
-                local remaining = (cooldown - elapsed) / 1000
-                procLabel:SetText(string.format("%.1fs", remaining))
-                procLabel.style:SetColor(1, 0.3, 0.3, 1)
+        for procName, procDef in pairs(weaponProcs) do
+            local endTime = procEndTime[procName]
+            if endTime then
+                local elapsed = currentTime - endTime
+                local cooldown = procDef.cooldown or 10000
+
+                if elapsed < cooldown then
+                    local remaining = cooldown - elapsed
+                    if shortestRemaining == nil or remaining < shortestRemaining then
+                        shortestRemaining = remaining
+                    end
+                    onCooldown = true
+                end
             end
+        end
+
+        if onCooldown and shortestRemaining then
+            procLabel:SetText(string.format("%.1fs", shortestRemaining / 1000))
+            procLabel.style:SetColor(1, 0.3, 0.3, 1)
         else
             procLabel:SetText("AVAILABLE")
             procLabel.style:SetColor(0, 1, 0, 1)
@@ -162,11 +174,10 @@ local function OnLoad()
 
     procBar.bg = procBar:CreateNinePartDrawable(TEXTURE_PATH.HUD, "background")
     procBar.bg:SetTextureInfo("bg_quest")
-    procBar.bg:SetColor(0, 0, 0, 0.5)  -- Semi-transparent black
+    procBar.bg:SetColor(0, 0, 0, 0.5)
     procBar.bg:AddAnchor("TOPLEFT", procBar, 0, 0)
     procBar.bg:AddAnchor("BOTTOMRIGHT", procBar, 0, 0)
 
-    -- Position from saved settings or default to center
     local uiScale = api.Interface:GetUIScale()
     if settings.posX ~= nil and settings.posY ~= nil then
         procBar:AddAnchor("TOPLEFT", "UIParent", settings.posX * uiScale, settings.posY * uiScale)
