@@ -1,3 +1,4 @@
+# Weapon Proc
 **Track your weapon's hidden proc/passive status at a glance. **
 
 **Features**
