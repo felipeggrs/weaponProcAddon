@@ -15,7 +15,7 @@ local weaponProcs = {
         thresholdIncrease = 900,
         displayName = "100% CRIT",
         color = {0.3, 0.7, 1},
-        cooldown = 10000,
+        cooldown = 30000, -- 30 second cooldown after proc ends
     },
     spear = {
         statName = "ignore_armor",
@@ -23,6 +23,13 @@ local weaponProcs = {
         displayName = "SPEAR PEN",
         color = {0.3, 0.7, 1},
         cooldown = 10000,  -- 10 second cooldown after proc ends
+    },
+    staff = {
+        statName = "magic_penetration",
+        thresholdIncrease = 8000,
+        displayName = "MAGIC PEN",
+        color = {0.3, 0.7, 1},
+        cooldown = 20000,  -- 20 second cooldown after proc ends
     }
 }
 
