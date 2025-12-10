@@ -19,9 +19,11 @@ Displays a bar with the weapon hidden proc availability:
 
 **Currently supports:**
 
-Longspear (10k armor pen)
+Longspear/shortspear (10k armor pen)
 
 Nodachi/Katana (100% crit rate)
+
+Staff (100% magic pen)
 
 (more weapons coming soon!)
 
