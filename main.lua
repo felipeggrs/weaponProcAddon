@@ -3,8 +3,8 @@ local api = require("api")
 local weapon_proc = {
     name = "Weapon Proc",
     author = "Wagasez",
-    version = "1.0",
-    desc = "Display longspear proc status. Created with George"
+    version = "1.1",
+    desc = "Display weapon proc status (spear, nodachi, katana, staff)"
 }
 
 local DEBUG_MODE = false
@@ -15,21 +15,41 @@ local weaponProcs = {
         thresholdIncrease = 900,
         displayName = "100% CRIT",
         color = {0.3, 0.7, 1},
-        cooldown = 30000, -- 30 second cooldown after proc ends
+        cooldown = 30000,
+        getCooldown = function()
+            local tooltipInfo = api.Equipment:GetEquippedItemTooltipText("player", EQUIP_SLOT.MAINHAND)
+            if tooltipInfo and type(tooltipInfo) == "table" then
+                local category = (tooltipInfo.category or ""):lower()
+                if string.find(category, "katana") then
+                    return 45000
+                end
+            end
+            return 30000
+        end
     },
     spear = {
         statName = "ignore_armor",
         thresholdIncrease = 8000,
         displayName = "SPEAR PEN",
         color = {0.3, 0.7, 1},
-        cooldown = 10000,  -- 10 second cooldown after proc ends
+        cooldown = 10000,
+        getCooldown = function()
+            local tooltipInfo = api.Equipment:GetEquippedItemTooltipText("player", EQUIP_SLOT.MAINHAND)
+            if tooltipInfo and type(tooltipInfo) == "table" then
+                local category = tooltipInfo.category or ""
+                if string.find(category:lower(), "shortspear") then
+                    return 30000
+                end
+            end
+            return 10000
+        end
     },
     staff = {
         statName = "magic_penetration",
         thresholdIncrease = 8000,
         displayName = "MAGIC PEN",
         color = {0.3, 0.7, 1},
-        cooldown = 20000,  -- 20 second cooldown after proc ends
+        cooldown = 20000,
     }
 }
 
@@ -58,17 +78,27 @@ local function DetectStatChanges()
                 if lastValue ~= nil and type(lastValue) == "number" then
                     local diff = currentValue - lastValue
 
-                    -- proc activation
+                    if DEBUG_MODE and math.abs(diff) >= 100 then
+                        api.Log:Info("[WeaponProc] Stat change: " .. statName .. " diff=" .. diff)
+                    end
+
                     if diff > 0 then
                         for procName, procDef in pairs(weaponProcs) do
                             if procDef.statName == statName and diff >= procDef.thresholdIncrease then
                                 if not activeProcs[procName] then
+                                    local cooldown = procDef.cooldown or 10000
+                                    if procDef.getCooldown then
+                                        cooldown = procDef.getCooldown()
+                                    end
+                                    if DEBUG_MODE then
+                                        api.Log:Info("[WeaponProc] Proc activated: " .. procName .. " cooldown=" .. cooldown)
+                                    end
                                     activeProcs[procName] = {
                                         startTime = currentTime,
                                         displayName = procDef.displayName,
                                         color = procDef.color,
                                         statName = statName,
-                                        cooldown = procDef.cooldown or 10000
+                                        cooldown = cooldown
                                     }
                                 end
                             end
@@ -112,6 +142,9 @@ local function UpdateUI()
             if endTime then
                 local elapsed = currentTime - endTime
                 local cooldown = procDef.cooldown or 10000
+                if procDef.getCooldown then
+                    cooldown = procDef.getCooldown()
+                end
 
                 if elapsed < cooldown then
                     local remaining = cooldown - elapsed
@@ -166,7 +199,7 @@ local function OnUpdate()
 end
 
 local function OnLoad()
-    api.Log:Info("Weapon Proc v1.0 loaded")
+    api.Log:Info("[WeaponProc] v" .. weapon_proc.version .. " by Wagasez")
 
     settings = api.GetSettings(weapon_proc.name)
     if settings.fontSize == nil then
@@ -195,7 +228,6 @@ local function OnLoad()
 
     function procBar:OnClick()
         if api.Input:IsShiftKeyDown() and not api.Input:IsControlKeyDown() then
-            -- Shift+Click: Toggle dragging
             if not isDragging then
                 isDragging = true
                 local mouseX, mouseY = api.Input:GetMousePos()
@@ -213,13 +245,11 @@ local function OnLoad()
                 api.Cursor:ClearCursor()
             end
         elseif api.Input:IsControlKeyDown() and api.Input:IsShiftKeyDown() then
-            -- Ctrl+Shift+Click: decrease font
             settings.fontSize = math.max(8, settings.fontSize - 2)
             procLabel.style:SetFontSize(settings.fontSize)
             UpdateBarSize()
             api.SaveSettings()
         elseif api.Input:IsControlKeyDown() then
-            -- Ctrl+Click: increase font
             settings.fontSize = math.min(40, settings.fontSize + 2)
             procLabel.style:SetFontSize(settings.fontSize)
             UpdateBarSize()
@@ -228,7 +258,6 @@ local function OnLoad()
     end
     procBar:SetHandler("OnClick", procBar.OnClick)
 
-    -- label
     procLabel = procBar:CreateChildWidget("label", "procLabel", 0, true)
     procLabel:SetExtent(barWidth, barHeight)
     procLabel:SetText("AVAILABLE")
