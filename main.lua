@@ -3,7 +3,7 @@ local api = require("api")
 local weapon_proc = {
     name = "Weapon Proc",
     author = "Wagasez",
-    version = "1.1",
+    version = "1.2.2",
     desc = "Display weapon proc status (spear, nodachi, katana, staff)"
 }
 

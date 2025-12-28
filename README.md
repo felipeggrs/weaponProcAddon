@@ -1,4 +1,4 @@
-# Weapon Proc v1.1
+# Weapon Proc v1.2.2
 **Track your weapon's hidden proc/passive status at a glance.**
 
 **Features**
@@ -25,7 +25,7 @@ Displays a bar with the weapon hidden proc availability:
 - Katana (100% crit rate, 45s cooldown)
 - Staff (10k magic pen, 20s cooldown)
 
-**v1.1 Changes:**
+**v1.2.2 Changes:**
 - Added dynamic cooldown detection based on equipped weapon type
 - Shortspear/Longspear now correctly show different cooldowns
 - Katana/Nodachi now correctly show different cooldowns
